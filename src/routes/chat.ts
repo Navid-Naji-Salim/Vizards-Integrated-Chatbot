@@ -8,6 +8,7 @@ router.post("/chat", async (req, res) => {
     const { message } = req.body;
 
     const chunks = getChunks();
+    console.log("Chunks:", chunks);
 
     const match = chunks.find(chunk =>
         chunk.toLowerCase().includes(message.toLowerCase())
