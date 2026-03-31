@@ -10,9 +10,15 @@ router.post("/chat", async (req, res) => {
     const chunks = getChunks();
     console.log("Chunks:", chunks);
 
-    const match = chunks.find(chunk =>
-        chunk.toLowerCase().includes(message.toLowerCase())
+    const words = message.toLowerCase().split(" ");
+
+    const match = chunks.find(chunk => {
+    const lower = chunk.toLowerCase();
+
+    return words.some((word: string) =>
+        lower.includes(word)
     );
+});
 
     if (!match) {
         return res.json({
