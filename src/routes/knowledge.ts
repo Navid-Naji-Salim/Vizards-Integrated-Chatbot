@@ -24,7 +24,6 @@ router.post("/upload", upload.single("file"), (req, res) => {
 
     res.json({
         message:"File uploaded",
-        preview:text.substring(0,200),
         chunksStored: chunks.length
     });
 
