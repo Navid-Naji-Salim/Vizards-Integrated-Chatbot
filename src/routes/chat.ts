@@ -5,35 +5,36 @@ import { openai } from "../services/openai.js";
 const router = Router();
 
 router.post("/chat", async (req, res) => {
+
     const { message } = req.body;
 
     const chunks = getChunks();
-    console.log("Chunks:", chunks);
 
-    const words = message.toLowerCase().split(" ");
-
-    const match = chunks.find(chunk => {
-    const lower = chunk.toLowerCase();
-
-    return words.some((word: string) =>
-        lower.includes(word)
+    const match = chunks.find(chunk =>
+        chunk.toLowerCase().includes(message.toLowerCase())
     );
-});
 
-    if (!match) {
-        return res.json({
-            answer: "No relevant info found"
-        });
-    }
+    // If no keyword match, use all knowledge instead
+    const context = match || chunks.join("\n");
 
     const response = await openai.responses.create({
         model: "gpt-4.1-mini",
-        input: `Question: ${message}\n\nContext:\n${match}`
+        max_output_tokens: 300,
+        input: `Answer using ONLY the provided project information.
+
+Project information:
+${context}
+
+Question:
+${message}
+
+If the answer is not contained in the project information, say you don't know.`
     });
 
     res.json({
-        answer: response.output_text
+        answer: response.output_text || "No response"
     });
+
 });
 
 export default router;
