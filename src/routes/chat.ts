@@ -14,7 +14,7 @@ router.post("/chat", async (req, res) => {
         chunk.toLowerCase().includes(message.toLowerCase())
     );
 
-    // If no keyword match, use all knowledge instead
+    // Always provide context
     const context = match || chunks.join("\n");
 
     const response = await openai.responses.create({
