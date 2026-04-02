@@ -1,30 +1,75 @@
 import { Router } from "express";
 import multer from "multer";
-import { readDocument } from "../services/documentService.js";
-import { chunkText } from "../services/chunkService.js";
-import { addChunks } from "../services/knowledgeStore.js";
+
+import { readDocument }
+from "../services/documentService.js";
+
+import { chunkText }
+from "../services/chunkService.js";
+
+import { addChunks }
+from "../services/knowledgeStore.js";
 
 const router = Router();
 
-const upload = multer({
-    dest: "uploads/"
+const upload =
+multer({
+
+    dest:"uploads/"
+
 });
 
-router.post("/upload", upload.single("file"), (req, res) => {
+router.post(
 
-    if(!req.file){
+"/upload",
+
+upload.single("file"),
+
+(req,res)=>{
+
+    const { projectId } =
+    req.body;
+
+    if(!projectId){
+
         return res.status(400).json({
-            error:"No file uploaded"
+
+            error:
+            "projectId required"
+
         });
+
     }
 
-    const text = readDocument(req.file.path);
-    const chunks = chunkText(text);
-    addChunks(chunks);
+    if(!req.file){
+
+        return res.status(400).json({
+
+            error:
+            "No file"
+
+        });
+
+    }
+
+    const text =
+    readDocument(req.file.path);
+
+    const chunks =
+    chunkText(text);
+
+    addChunks(
+        projectId,
+        chunks
+    );
 
     res.json({
+
         message:"File uploaded",
-        chunksStored: chunks.length
+
+        chunksStored:
+        chunks.length
+
     });
 
 });

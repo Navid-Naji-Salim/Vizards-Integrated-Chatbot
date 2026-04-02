@@ -1,9 +1,24 @@
-export const knowledgeChunks: string[] = [];
+const store: Record<string,string[]> = {};
 
-export function addChunks(chunks: string[]) {
-    knowledgeChunks.push(...chunks);
+export function addChunks(
+    projectId:string,
+    chunks:string[]
+){
+
+    if(!store[projectId]){
+
+        store[projectId] = [];
+
+    }
+
+    store[projectId].push(...chunks);
+
 }
 
-export function getChunks() {
-    return knowledgeChunks;
+export function getChunks(
+    projectId:string
+){
+
+    return store[projectId] || [];
+
 }

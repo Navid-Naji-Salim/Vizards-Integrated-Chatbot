@@ -1,55 +1,162 @@
 import { Router } from "express";
-import { getChunks } from "../services/knowledgeStore.js";
-import { openai } from "../services/openai.js";
+
+import { getChunks }
+from "../services/knowledgeStore.js";
+
+import {
+    getSession,
+    addMessage
+}
+from "../services/sessionStore.js";
+
+import { openai }
+from "../services/openai.js";
+
+import type {
+ResponseInput
+}
+from "openai/resources/responses/responses";
 
 const router = Router();
 
-router.post("/chat", async (req, res) => {
+router.post(
 
-    const { message } = req.body;
+"/chat",
 
-    const chunks = getChunks();
+async(req,res)=>{
 
-    const match = chunks.find(chunk =>
-        chunk.toLowerCase().includes(message.toLowerCase())
-    );
+try{
 
-    // Always provide context (fallback to all knowledge if no keyword match)
-    const context = match || chunks.join("\n");
+    const {
 
-    try {
+        message,
 
-        const response = await openai.responses.create({
-            model: "gpt-4.1-mini",
-            max_output_tokens: 300,
-            input: `You are a helpful assistant for the Aram Towers skyscraper project.
+        projectId,
 
-Use the project information below to answer the user's question.
+        sessionId
 
-If the question is vague, explain what the skyscraper project is about and what information is available.
-If the question is not directly related, still try to connect it to the project information and be helpful.
-Never say "I don't know" unless the project information truly contains nothing relevant.
+    } = req.body;
 
-Project information:
-${context}
+    if(!message ||
+       !projectId ||
+       !sessionId){
 
-User question:
-${message}`
-        });
+        return res.status(400).json({
 
-        res.json({
-            answer: response.output_text || "No response"
-        });
+            error:
+            "message, projectId, sessionId required"
 
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            answer: "AI request failed"
         });
 
     }
+
+    const chunks =
+    getChunks(projectId);
+
+    const context =
+    chunks.slice(0,5).join("\n");
+
+    const conversation =
+    getSession(sessionId);
+
+    const input:
+    ResponseInput = [
+
+        {
+
+            role:"system",
+
+            content:
+
+`You are an assistant for a skyscraper project.
+
+Answer only using the project info.
+
+If answer not present,
+say you don't know.
+
+Project info:
+
+${context}`
+
+        },
+
+        ...conversation.map(
+
+        msg => ({
+
+            role:msg.role,
+
+            content:msg.content
+
+        })
+
+        ),
+
+        {
+
+            role:"user",
+
+            content:message
+
+        }
+
+    ];
+
+    const response =
+    await openai.responses.create({
+
+        model:
+        "gpt-4.1-mini",
+
+        input,
+
+        max_output_tokens:500
+
+    });
+
+    const answer =
+    response.output_text ||
+    "No response";
+
+    addMessage(
+
+        sessionId,
+
+        "user",
+
+        message
+
+    );
+
+    addMessage(
+
+        sessionId,
+
+        "assistant",
+
+        answer
+
+    );
+
+    res.json({
+
+        answer
+
+    });
+
+}
+catch(error){
+
+    console.log(error);
+
+    res.status(500).json({
+
+        error:"Chat failed"
+
+    });
+
+}
 
 });
 
