@@ -57,7 +57,7 @@ try{
     chunks.slice(0,5).join("\n");
 
     const conversation =
-    getSession(sessionId);
+    getSession(projectId, sessionId);
 
     const input:
     ResponseInput = [
@@ -68,16 +68,22 @@ try{
 
             content:
 
-`You are an assistant for a skyscraper project.
+`
+You are an AI assistant helping users understand a skyscraper project.
 
-Answer only using the project info.
+Use the project information below when relevant.
 
-If answer not present,
-say you don't know.
+If the user asks something general, you may answer normally.
 
-Project info:
+If the user asks about project details not in the data, say you don't have that information.
 
-${context}`
+PROJECT INFORMATION:
+${context}
+
+USER QUESTION:
+${message}
+`
+
 
         },
 
@@ -121,6 +127,8 @@ ${context}`
 
     addMessage(
 
+        projectId,
+
         sessionId,
 
         "user",
@@ -130,6 +138,8 @@ ${context}`
     );
 
     addMessage(
+        
+        projectId,
 
         sessionId,
 

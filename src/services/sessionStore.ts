@@ -9,21 +9,39 @@ type Message = {
 const sessions:
 Record<string,Message[]> = {};
 
-export function getSession(
+function getKey(
+    projectId:string,
     sessionId:string
 ){
 
-    if(!sessions[sessionId]){
+    return `${projectId}:${sessionId}`;
 
-        sessions[sessionId] = [];
+}
+
+export function getSession(
+
+    projectId:string,
+
+    sessionId:string
+
+){
+
+    const key =
+    getKey(projectId,sessionId);
+
+    if(!sessions[key]){
+
+        sessions[key] = [];
 
     }
 
-    return sessions[sessionId];
+    return sessions[key];
 
 }
 
 export function addMessage(
+
+    projectId:string,
 
     sessionId:string,
 
@@ -33,13 +51,16 @@ export function addMessage(
 
 ){
 
-    if(!sessions[sessionId]){
+    const key =
+    getKey(projectId,sessionId);
 
-        sessions[sessionId] = [];
+    if(!sessions[key]){
+
+        sessions[key] = [];
 
     }
 
-    sessions[sessionId].push({
+    sessions[key].push({
 
         role,
 
@@ -47,11 +68,11 @@ export function addMessage(
 
     });
 
-    // keep last 10 messages
-    if(sessions[sessionId].length > 10){
+    // keep last 10
+    if(sessions[key].length > 10){
 
-        sessions[sessionId] =
-        sessions[sessionId].slice(-10);
+        sessions[key] =
+        sessions[key].slice(-10);
 
     }
 
