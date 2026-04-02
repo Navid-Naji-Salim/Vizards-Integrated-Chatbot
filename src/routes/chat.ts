@@ -1,110 +1,66 @@
 import { Router } from "express";
-
-import { getChunks }
-from "../services/knowledgeStore.js";
-
-import {
-    getSession,
-    addMessage
-}
-from "../services/sessionStore.js";
-
-import { openai }
-from "../services/openai.js";
+import { getChunks } from "../services/knowledgeStore.js";
+import { openai } from "../services/openai.js";
 
 import type {
 ResponseInput
-}
-from "openai/resources/responses/responses";
+} from "openai/resources/responses/responses";
 
 const router = Router();
 
-router.post(
-
-"/chat",
-
-async(req,res)=>{
+router.post("/chat", async (req, res) => {
 
 try{
 
     const {
-
         message,
-
         projectId,
-
-        sessionId
-
+        history
     } = req.body;
 
-    if(!message ||
-       !projectId ||
-       !sessionId){
+    if(!message || !projectId){
 
         return res.status(400).json({
-
-            error:
-            "message, projectId, sessionId required"
-
+            error:"message and projectId required"
         });
 
     }
 
+    // Safety validation
+    const safeHistory =
+    Array.isArray(history)
+    ? history
+    : [];
+
+    // Load project knowledge
     const chunks =
     getChunks(projectId);
 
     const context =
-    chunks.slice(0,5).join("\n");
+    chunks.join("\n");
 
-    const conversation =
-    getSession(projectId, sessionId);
-
-    const input:
-    ResponseInput = [
+    const input: ResponseInput = [
 
         {
-
             role:"system",
 
             content:
+`You are an assistant for a skyscraper project.
 
-`
-You are an AI assistant helping users understand a skyscraper project.
+Use conversation history when relevant.
 
-Use the project information below when relevant.
+Answer using project information when possible.
 
-If the user asks something general, you may answer normally.
+Project information:
 
-If the user asks about project details not in the data, say you don't have that information.
-
-PROJECT INFORMATION:
-${context}
-
-USER QUESTION:
-${message}
-`
-
-
+${context}`
         },
 
-        ...conversation.map(
-
-        msg => ({
-
-            role:msg.role,
-
-            content:msg.content
-
-        })
-
-        ),
+        ...safeHistory,
 
         {
-
             role:"user",
-
             content:message
-
         }
 
     ];
@@ -112,8 +68,7 @@ ${message}
     const response =
     await openai.responses.create({
 
-        model:
-        "gpt-4.1-mini",
+        model:"gpt-4.1-mini",
 
         input,
 
@@ -125,34 +80,8 @@ ${message}
     response.output_text ||
     "No response";
 
-    addMessage(
-
-        projectId,
-
-        sessionId,
-
-        "user",
-
-        message
-
-    );
-
-    addMessage(
-        
-        projectId,
-
-        sessionId,
-
-        "assistant",
-
-        answer
-
-    );
-
     res.json({
-
         answer
-
     });
 
 }
@@ -161,9 +90,7 @@ catch(error){
     console.log(error);
 
     res.status(500).json({
-
         error:"Chat failed"
-
     });
 
 }
