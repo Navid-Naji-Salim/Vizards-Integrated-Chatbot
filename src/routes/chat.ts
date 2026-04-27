@@ -45,13 +45,15 @@ try{
             role:"system",
 
             content:
-`You are an assistant for a skyscraper project.
+`You are an assistant for specific information you are given.
+
+stay within the scope of the subject.
 
 Use conversation history when relevant.
 
-Answer using project information when possible.
+Answer using the given information when possible.
 
-Project information:
+the given information:
 
 ${context}`
         },
